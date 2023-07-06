@@ -3,7 +3,11 @@ import logging
 from json import dumps
 
 import requests
-from oauthlib.oauth1 import SIGNATURE_RSA_SHA512
+
+try:
+    from oauthlib.oauth1.rfc5849 import SIGNATURE_RSA_SHA512 as SIGNATURE_RSA
+except ImportError:
+    from oauthlib.oauth1 import SIGNATURE_RSA
 from requests import HTTPError
 from requests_oauthlib import OAuth1, OAuth2
 from six.moves.urllib.parse import urlencode
@@ -14,7 +18,10 @@ log = get_default_logger(__name__)
 
 
 class AtlassianRestAPI(object):
-    default_headers = {"Content-Type": "application/json", "Accept": "application/json"}
+    default_headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
     experimental_headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
@@ -103,7 +110,7 @@ class AtlassianRestAPI(object):
         oauth = OAuth1(
             oauth_dict["consumer_key"],
             rsa_key=oauth_dict["key_cert"],
-            signature_method=SIGNATURE_RSA_SHA512,
+            signature_method=oauth_dict.get("signature_method", SIGNATURE_RSA),
             resource_owner_key=oauth_dict["access_token"],
             resource_owner_secret=oauth_dict["access_token_secret"],
         )
@@ -166,7 +173,7 @@ class AtlassianRestAPI(object):
             api_root = self.api_root
         if api_version is None:
             api_version = self.api_version
-        return "/".join(s.strip("/") for s in [api_root, api_version, resource] if s is not None)
+        return "/".join(str(s).strip("/") for s in [api_root, api_version, resource] if s is not None)
 
     @staticmethod
     def url_joiner(url, path, trailing=None):
@@ -222,7 +229,12 @@ class AtlassianRestAPI(object):
         if files is None:
             data = None if not data else dumps(data)
             json_dump = None if not json else dumps(json)
-        self.log_curl_debug(method=method, url=url, headers=headers, data=data if data else json_dump)
+        self.log_curl_debug(
+            method=method,
+            url=url,
+            headers=headers,
+            data=data if data else json_dump,
+        )
         headers = headers or self.default_headers
         response = self._session.request(
             method=method,
@@ -264,7 +276,7 @@ class AtlassianRestAPI(object):
         :param flags:
         :param params:
         :param headers:
-        :param not_json_response: OPTIONAL: For get content from raw requests packet
+        :param not_json_response: OPTIONAL: For get content from raw request's packet
         :param trailing: OPTIONAL: for wrap slash symbol in the end of string
         :param absolute: bool, OPTIONAL: Do not prefix url, url is absolute
         :param advanced_mode: bool, OPTIONAL: Return the raw response
@@ -369,6 +381,47 @@ class AtlassianRestAPI(object):
             return response
         return self._response_handler(response)
 
+    """
+        Partial modification of resource by PATCH Method
+        LINK: https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PATCH
+    """
+
+    def patch(
+        self,
+        path,
+        data=None,
+        headers=None,
+        files=None,
+        trailing=None,
+        params=None,
+        absolute=False,
+        advanced_mode=False,
+    ):
+        """
+        :param path: Path of request
+        :param data:
+        :param headers: adjusted headers, usually it's default
+        :param files:
+        :param trailing:
+        :param params:
+        :param absolute:
+        :param advanced_mode: bool, OPTIONAL: Return the raw response
+        :return: if advanced_mode is not set - returns dictionary. If it is set - returns raw response.
+        """
+        response = self.request(
+            "PATCH",
+            path=path,
+            data=data,
+            headers=headers,
+            files=files,
+            params=params,
+            trailing=trailing,
+            absolute=absolute,
+        )
+        if self.advanced_mode or advanced_mode:
+            return response
+        return self._response_handler(response)
+
     def delete(
         self,
         path,
@@ -421,7 +474,11 @@ class AtlassianRestAPI(object):
                     error_msg = "\n".join([k + ": " + v for k, v in j.items()])
                 else:
                     error_msg = "\n".join(
-                        j.get("errorMessages", list()) + [k + ": " + v for k, v in j.get("errors", dict()).items()]
+                        j.get("errorMessages", list())
+                        + [
+                            k.get("message", "") if isinstance(k, dict) else v
+                            for k, v in j.get("errors", dict()).items()
+                        ]
                     )
             except Exception as e:
                 log.error(e)
@@ -430,3 +487,8 @@ class AtlassianRestAPI(object):
                 raise HTTPError(error_msg, response=response)
         else:
             response.raise_for_status()
+
+    @property
+    def session(self):
+        """Providing access to the restricted field"""
+        return self._session

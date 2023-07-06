@@ -11,7 +11,11 @@ class DefaultReviewers(BitbucketCloudBase):
         super(DefaultReviewers, self).__init__(url, *args, **kwargs)
 
     def __get_object(self, data):
-        return DefaultReviewer(self.url_joiner(self.url, data["uuid"]), data, **self._new_session_args)
+        return DefaultReviewer(
+            self.url_joiner(self.url, data["uuid"]),
+            data,
+            **self._new_session_args,
+        )
 
     def add(self, user):
         """
@@ -57,7 +61,7 @@ class DefaultReviewers(BitbucketCloudBase):
         """
         Returns the default reviewer in this repository.
 
-        :param user: string: The requested user name
+        :param user: string: The requested username
 
         :return: The requested DefaultReviewer object, None if not a default reviewer
 

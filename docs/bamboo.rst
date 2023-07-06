@@ -231,6 +231,9 @@ Other actions
     # Get build queue
     get_build_queue(expand='queuedBuilds')
 
+    # Get deployment queue
+    get_deployment_queue(expand='queuedDeployments')
+
     # Get server information
     server_info()
 
@@ -275,4 +278,13 @@ Elastic Bamboo
 
     # Delete elastic bamboo configuration
     delete_elastic_configuration('123456')
+
+    # Get elastic bamboo configuration
+    get_elastic_bamboo()
+
+    # Set elastic bamboo configuration
+    set_elastic_bamboo({"enabled": True, "awsCredentialsType": "INSTANCE_PROFILE", "region": "ASIA_PACIFIC_SE_2",
+    "privateKeyFile": "", "certificateFile": "", "maxNumOfElasticInstances": 1, "allocatePublicIpToVpcInstances": False,
+    "elasticInstanceManagement": {"type": "Disabled"}, "uploadAwsAccountIdentifierToElasticInstances": False,
+    "elasticAutoTermination": { "enabled": True, "shutdownDelay": 300}})
 

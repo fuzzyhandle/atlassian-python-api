@@ -117,7 +117,7 @@ Manage repositories
     fork_repository(project_key, repository_slug, new_repository_slug)
 
     # Fork repo to new project
-    fork_repository(project_key, repository_slug, new_repository_slug, new_project_key)
+    fork_repository_new_project(project_key, repository_slug, new_project_key, new_repository_slug)
 
 Manage Code Insights
 --------------------
@@ -207,6 +207,9 @@ Manage code
 
     # Add comment into pull request
     bitbucket.add_pull_request_comment(project, repository, pull_request_id, text)
+
+    # Reply to a comment of a pull request
+    bitbucket.add_pull_request_comment(project, repository, pull_request_id, text, parent_id=None)
 
     # Create a new pull request between two branches.
     bitbucket.open_pull_request(source_project, source_repo, dest_project, dest_repo, source_branch, destination_branch, title, description)
@@ -338,6 +341,15 @@ Bitbucket Cloud
     # Get a single workplace by workplace slug
     workplace = cloud.workspaces.get(workspace_slug)
 
+    # Get a list of permissions in a workspace (this may not work depending on the size of your workspace)
+    workplace.permissions.each():
+
+    # Get a list of repository permissions in a workspace (this may not work depending on the size of your workspace)
+    workplace.permissions.repositories():
+
+    # Get a single repository permissions in a workspace
+    workplace.permissions.repositories(repo_slug):
+
     # Get a list of projects in a workspace
     workplace.projects.each():
 
@@ -346,6 +358,54 @@ Bitbucket Cloud
 
     # Get a list of repos from a project
     project.repositories.each():
+
+    # Get a repository
+    repository = workplace.repositories.get(repository_slug)
+
+    # Get a list of deployment environments from a repository
+    repository.deployment_environments.each():
+
+    # Get a single deployment environment from a repository by deployment environment key
+    deployment_environment = repository.deployment_environments.get(deployment_environment_key)
+
+    # Get a list of deployment environment variables from a deployment environment
+    deployment_environment_variables = deployment_environment.deployment_environment_variables.each():
+
+    # Create a new deployment environment variable with a name of 'KEY', value of 'VALUE' and is not secured.
+    new_deployment_environment_variable = deployment_environment.deployment_environment_variables.create("KEY", "VALUE", False)
+
+    # Update the 'key' field of repository_variable
+    updated_deployment_environment_variable = new_deployment_environment_variable.update(key="UPDATED_DEPLOYMENT_ENVIRONMENT_VARIABLE_KEY")
+
+    # Update the 'value' field of repository_variable
+    updated_deployment_environment_variable = new_deployment_environment_variable.update(value="UPDATED_DEPLOYMENT_ENVIRONMENT_VARIABLE_VALUE")
+
+    # Delete deployment environment variable
+    updated_deployment_environment_variable.delete()
+
+    # Get a list of group permissions from a repository
+    repository.group_permissions.each():
+
+    # Get a single group permission from a repository by group slug
+    repository.group_permissions.get(group_slug)
+
+    # Get a list of repository variables from a repository
+    repository.repository_variables.each():
+
+    # Get a single repository variable from a repository by repository variable key
+    repository_variable = repository.repository_variables.get(repository_variable_key)
+
+    # Create a new repository variable with a name of 'KEY', value of 'VALUE' and is not secured.
+    new_repository_variable = repository.repository_variables.create("KEY", "VALUE", False)
+
+    # Update the 'key' field of repository_variable
+    updated_repository_variable = repository_variable.update(key="UPDATED_REPOSITORY_VARIABLE_KEY")
+
+    # Update the 'value' field of repository_variable
+    updated_repository_variable = repository_variable.update(value="UPDATED_REPOSITORY_VARIABLE_VALUE")
+
+    # Delete repository_variable
+    repository_variable.delete()
 
 Pipelines management
 --------------------
